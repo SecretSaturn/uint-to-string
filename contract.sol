@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 //  This is a demo contract designed to benchmark the gas 
 //  usage of different uint256 » string conversion algorithms.
-//  Medium article  : 
+//  Medium article  : https://neznein9.medium.com/the-fastest-way-to-convert-uint256-to-string-in-solidity-b880cfa5f377
 //  Github source   : https://github.com/neznein9/uint-to-string
 //  Mumbai contract : 0xb51a3175aCcE7D01bFD0717f9C4BD69a13dF6D3C
 contract UintToStringTesting {
