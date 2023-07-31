@@ -1,0 +1,17 @@
+{
+  "name": "uinttostring",
+  "version": "0.0.1",
+  "description": "",
+  "type":"module",
+
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "Rob Sampson <rob@hattv.com>",
+  "license": "ISC",
+  "dependencies": {
+    "ethers": "^6.6.7"
+  }
+}
