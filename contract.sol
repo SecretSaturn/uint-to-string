@@ -150,49 +150,54 @@ library Algos {
     }
 
     function uintToStringSaturn(uint256 x) internal pure returns (string memory s) {
-    if (x == 0) return "0"; // Handle the case where the input is zero
-    unchecked {
-        // Handle numbers with less than 31 digits
-        if (x < 1e31) { 
-            uint256 c1 = itoa31(x);
-            assembly {
-                s := mload(0x40) // Get the free memory pointer for storing the result
-                let z := shr(248, c1) // Extract the number of digits stored in the highest byte of c1
-                mstore(s, z) // Store the length of the string
-                mstore(add(s, 32), shl(sub(256, mul(z, 8)), c1)) // Store the digit bytes shifted to the correct position
-                mstore(0x40, add(s, 64)) // Update the free memory pointer
+        if (x != 0) {
+            unchecked {
+                // Handle numbers with less than 31 digits
+                if (x < 1e31) { 
+                    uint256 c1 = itoa31(x);
+                    assembly {
+                        s := mload(0x40) // Get the free memory pointer for storing the result
+                        let z := shr(248, c1) // Extract the number of digits stored in the highest byte of c1
+                        mstore(s, z) // Store the length of the string
+                        mstore(add(s, 32), shl(sub(256, mul(z, 8)), c1)) // Store the digit bytes shifted to the correct position
+                        mstore(0x40, add(s, 64)) // Update the free memory pointer
+                    }
+                }
+                // Handle numbers with 31 to 62 digits
+                else if (x < 1e62) {
+                    uint256 c1 = itoa31(x);
+                    uint256 c2 = itoa31(x / 1e31);
+                    assembly {
+                        s := mload(0x40) // Get the free memory pointer for storing the result
+                        let z := shr(248, c2) // Extract the number of digits stored in the highest byte of c2
+                        mstore(s, add(z, 31)) // Store the length of the string (z digits of c2 + 31 digits of c1)
+                        mstore(add(s, 32), shl(sub(256, mul(z, 8)), c2)) // Store the digit bytes of c2 shifted to the correct position
+                        mstore(add(s, add(32, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
+                        mstore(0x40, add(s, 96)) // Update the free memory pointer
+                    }
+                }
+                // Handle numbers with more than 62 digits
+                else {
+                    uint256 c1 = itoa31(x);
+                    uint256 c2 = itoa31(x / 1e31);
+                    uint256 c3 = itoa31(x / 1e62);
+                    assembly {
+                        s := mload(0x40) // Get the free memory pointer for storing the result
+                        let z := shr(248, c3) // Extract the number of digits stored in the highest byte of c3
+                        mstore(s, add(z, 62)) // Store the length of the string (z digits of c3 + 62 digits of c2 and c1)
+                        mstore(add(s, 32), shl(sub(256, mul(z, 8)), c3)) // Store the digit bytes of c3 shifted to the correct position
+                        mstore(add(s, add(32, z)), shl(8, c2)) // Store the digit bytes of c2 shifted to the correct position
+                        mstore(add(s, add(63, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
+                        mstore(0x40, add(s, 128)) // Update the free memory pointer
+                    }
+                }
             }
         }
-        // Handle numbers with 31 to 62 digits
-        else if (x < 1e62) {
-            uint256 c1 = itoa31(x);
-            uint256 c2 = itoa31(x / 1e31);
-            assembly {
-                s := mload(0x40) // Get the free memory pointer for storing the result
-                let z := shr(248, c2) // Extract the number of digits stored in the highest byte of c2
-                mstore(s, add(z, 31)) // Store the length of the string (z digits of c2 + 31 digits of c1)
-                mstore(add(s, 32), shl(sub(256, mul(z, 8)), c2)) // Store the digit bytes of c2 shifted to the correct position
-                mstore(add(s, add(32, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
-                mstore(0x40, add(s, 96)) // Update the free memory pointer
-            }
-        }
-        // Handle numbers with more than 62 digits
         else {
-            uint256 c1 = itoa31(x);
-            uint256 c2 = itoa31(x / 1e31);
-            uint256 c3 = itoa31(x / 1e62);
-            assembly {
-                s := mload(0x40) // Get the free memory pointer for storing the result
-                let z := shr(248, c3) // Extract the number of digits stored in the highest byte of c3
-                mstore(s, add(z, 62)) // Store the length of the string (z digits of c3 + 62 digits of c2 and c1)
-                mstore(add(s, 32), shl(sub(256, mul(z, 8)), c3)) // Store the digit bytes of c3 shifted to the correct position
-                mstore(add(s, add(32, z)), shl(8, c2)) // Store the digit bytes of c2 shifted to the correct position
-                mstore(add(s, add(63, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
-                mstore(0x40, add(s, 128)) // Update the free memory pointer
-            }
+            return "0"; // Handle the case where the input is zero
         }
     }
-}
+
     /// @notice Helper function for UInt256 Conversion
     /// @param x The uint256 value to convert
     /// @return y The string representation of the uint256 value as a
