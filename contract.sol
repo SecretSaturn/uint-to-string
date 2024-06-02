@@ -150,49 +150,54 @@ library Algos {
     }
 
     function uintToStringSaturn(uint256 x) internal pure returns (string memory s) {
-    if (x == 0) return "0"; // Handle the case where the input is zero
-    unchecked {
-        // Handle numbers with less than 31 digits
-        if (x < 1e31) { 
-            uint256 c1 = itoa31(x);
-            assembly {
-                s := mload(0x40) // Get the free memory pointer for storing the result
-                let z := shr(248, c1) // Extract the number of digits stored in the highest byte of c1
-                mstore(s, z) // Store the length of the string
-                mstore(add(s, 32), shl(sub(256, mul(z, 8)), c1)) // Store the digit bytes shifted to the correct position
-                mstore(0x40, add(s, 64)) // Update the free memory pointer
+        if (x != 0) {
+            unchecked {
+                // Handle numbers with less than 31 digits
+                if (x < 1e31) { 
+                    uint256 c1 = itoa31(x);
+                    assembly {
+                        s := mload(0x40) // Get the free memory pointer for storing the result
+                        let z := shr(248, c1) // Extract the number of digits stored in the highest byte of c1
+                        mstore(s, z) // Store the length of the string
+                        mstore(add(s, 32), shl(sub(256, mul(z, 8)), c1)) // Store the digit bytes shifted to the correct position
+                        mstore(0x40, add(s, 64)) // Update the free memory pointer
+                    }
+                }
+                // Handle numbers with 31 to 62 digits
+                else if (x < 1e62) {
+                    uint256 c1 = itoa31(x);
+                    uint256 c2 = itoa31(x / 1e31);
+                    assembly {
+                        s := mload(0x40) // Get the free memory pointer for storing the result
+                        let z := shr(248, c2) // Extract the number of digits stored in the highest byte of c2
+                        mstore(s, add(z, 31)) // Store the length of the string (z digits of c2 + 31 digits of c1)
+                        mstore(add(s, 32), shl(sub(256, mul(z, 8)), c2)) // Store the digit bytes of c2 shifted to the correct position
+                        mstore(add(s, add(32, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
+                        mstore(0x40, add(s, 96)) // Update the free memory pointer
+                    }
+                }
+                // Handle numbers with more than 62 digits
+                else {
+                    uint256 c1 = itoa31(x);
+                    uint256 c2 = itoa31(x / 1e31);
+                    uint256 c3 = itoa31(x / 1e62);
+                    assembly {
+                        s := mload(0x40) // Get the free memory pointer for storing the result
+                        let z := shr(248, c3) // Extract the number of digits stored in the highest byte of c3
+                        mstore(s, add(z, 62)) // Store the length of the string (z digits of c3 + 62 digits of c2 and c1)
+                        mstore(add(s, 32), shl(sub(256, mul(z, 8)), c3)) // Store the digit bytes of c3 shifted to the correct position
+                        mstore(add(s, add(32, z)), shl(8, c2)) // Store the digit bytes of c2 shifted to the correct position
+                        mstore(add(s, add(63, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
+                        mstore(0x40, add(s, 128)) // Update the free memory pointer
+                    }
+                }
             }
         }
-        // Handle numbers with 31 to 62 digits
-        else if (x < 1e62) {
-            uint256 c1 = itoa31(x);
-            uint256 c2 = itoa31(x / 1e31);
-            assembly {
-                s := mload(0x40) // Get the free memory pointer for storing the result
-                let z := shr(248, c2) // Extract the number of digits stored in the highest byte of c2
-                mstore(s, add(z, 31)) // Store the length of the string (z digits of c2 + 31 digits of c1)
-                mstore(add(s, 32), shl(sub(256, mul(z, 8)), c2)) // Store the digit bytes of c2 shifted to the correct position
-                mstore(add(s, add(32, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
-                mstore(0x40, add(s, 96)) // Update the free memory pointer
-            }
-        }
-        // Handle numbers with more than 62 digits
         else {
-            uint256 c1 = itoa31(x);
-            uint256 c2 = itoa31(x / 1e31);
-            uint256 c3 = itoa31(x / 1e62);
-            assembly {
-                s := mload(0x40) // Get the free memory pointer for storing the result
-                let z := shr(248, c3) // Extract the number of digits stored in the highest byte of c3
-                mstore(s, add(z, 62)) // Store the length of the string (z digits of c3 + 62 digits of c2 and c1)
-                mstore(add(s, 32), shl(sub(256, mul(z, 8)), c3)) // Store the digit bytes of c3 shifted to the correct position
-                mstore(add(s, add(32, z)), shl(8, c2)) // Store the digit bytes of c2 shifted to the correct position
-                mstore(add(s, add(63, z)), shl(8, c1)) // Store the digit bytes of c1 shifted to the correct position
-                mstore(0x40, add(s, 128)) // Update the free memory pointer
-            }
+            return "0"; // Handle the case where the input is zero
         }
     }
-}
+
     /// @notice Helper function for UInt256 Conversion
     /// @param x The uint256 value to convert
     /// @return y The string representation of the uint256 value as a
@@ -203,12 +208,11 @@ library Algos {
     function itoa31 (uint256 x) private pure returns (uint256 y) {
         unchecked {
             // Initialize the byte sequence with 0x30 (ASCII '0') and a leading byte for zero count
-            y = 0x0030303030303030303030303030303030303030303030303030303030303030;
-            
-            // Convert the number into ASCII digits and place them in the correct position
-            y += x % 10; 
-            y += (x / 1e1 % 10) << 8; 
-            y += (x / 1e2 % 10) << 16;
+            y = 0x0030303030303030303030303030303030303030303030303030303030303030
+                // Convert the number into ASCII digits and place them in the correct position
+                + (x % 10)
+                + ((x / 1e1 % 10) << 8)
+                + ((x / 1e2 % 10) << 16);
 
             // Use checkpoints to reduce unnecessary divisions and modulo operations
             if (x < 1e3) {
@@ -216,86 +220,97 @@ library Algos {
                 if (x < 1e2) return y += 2 << 248; // Two digits
                 return y += 3 << 248; // Three digits
             }
-            y += (x / 1e3 % 10) << 24; 
-            y += (x / 1e4 % 10) << 32; 
-            y += (x / 1e5 % 10) << 40;
+
+            y +=  ((x / 1e3 % 10) << 24)
+                + ((x / 1e4 % 10) << 32)
+                + ((x / 1e5 % 10) << 40);
 
             if (x < 1e6) {
                 if (x < 1e4)  return y += 4 << 248; // Four digits
                 if (x < 1e5)  return y += 5 << 248; // Five digits
                 return  y += 6 << 248; // Six digits
             }
-            y += (x / 1e6 % 10) << 48; 
-            y += (x / 1e7 % 10) << 56; 
-            y += (x / 1e8 % 10) << 64;
+
+            y +=  ((x / 1e6 % 10) << 48)
+                + ((x / 1e7 % 10) << 56)
+                + ((x / 1e8 % 10) << 64);
 
             if (x < 1e9) {
                 if (x < 1e7) return y += 7 << 248; // Seven digits
                 if (x < 1e8) return y += 8 << 248; // Eight digits
                 return y += 9 << 248; // Nine digits
             }
-            y += (x / 1e9 % 10) << 72; 
-            y += (x / 1e10 % 10) << 80; 
-            y += (x / 1e11 % 10) << 88;
+
+            y +=  ((x / 1e9 % 10) << 72)
+                + ((x / 1e10 % 10) << 80)
+                + ((x / 1e11 % 10) << 88);
 
             if (x < 1e12) {
                 if (x < 1e10) return y += 10 << 248; // Ten digits
                 if (x < 1e11) return y += 11 << 248; // Eleven digits
                 return y += 12 << 248; // Twelve digits
             }
-            y += (x / 1e12 % 10) << 96; 
-            y += (x / 1e13 % 10) << 104; 
-            y += (x / 1e14 % 10) << 112;
+
+            y +=  ((x / 1e12 % 10) << 96)
+                + ((x / 1e13 % 10) << 104)
+                + ((x / 1e14 % 10) << 112);
 
             if (x < 1e15) {
                 if (x < 1e13) return y += 13 << 248; // Thirteen digits
                 if (x < 1e14) return y += 14 << 248; // Fourteen digits
                 return y += 15 << 248; // Fifteen digits
             }
-            y += (x / 1e15 % 10) << 120; 
-            y += (x / 1e16 % 10) << 128; 
-            y += (x / 1e17 % 10) << 136;
+
+            y +=  ((x / 1e15 % 10) << 120)
+                + ((x / 1e16 % 10) << 128)
+                + ((x / 1e17 % 10) << 136);
 
             if (x < 1e18) {
                 if (x < 1e16) return y += 16 << 248; // Sixteen digits
                 if (x < 1e17) return y += 17 << 248; // Seventeen digits
                 return y += 18 << 248; // Eighteen digits
             }
-            y += (x / 1e18 % 10) << 144; 
-            y += (x / 1e19 % 10) << 152; 
-            y += (x / 1e20 % 10) << 160;
+
+            y +=  ((x / 1e18 % 10) << 144)
+                + ((x / 1e19 % 10) << 152)
+                + ((x / 1e20 % 10) << 160);
 
             if (x < 1e21) {
                 if (x < 1e19) return y += 19 << 248; // Nineteen digits
                 if (x < 1e20) return y += 20 << 248; // Twenty digits
                 return y += 21 << 248; // Twenty-one digits
             }
-            y += (x / 1e21 % 10) << 168; 
-            y += (x / 1e22 % 10) << 176; 
-            y += (x / 1e23 % 10) << 184;
+
+            y +=  ((x / 1e21 % 10) << 168)
+                + ((x / 1e22 % 10) << 176)
+                + ((x / 1e23 % 10) << 184);
 
             if (x < 1e24) {
                 if (x < 1e22) return y += 22 << 248; // Twenty-two digits
                 if (x < 1e23) return y += 23 << 248; // Twenty-three digits
                 return y += 24 << 248; // Twenty-four digits
             }
-            y += (x / 1e24 % 10) << 192; 
-            y += (x / 1e25 % 10) << 200; 
-            y += (x / 1e26 % 10) << 208;
+
+            y +=  ((x / 1e24 % 10) << 192)
+                + ((x / 1e25 % 10) << 200)
+                + ((x / 1e26 % 10) << 208);
 
             if (x < 1e27) {
                 if (x < 1e25) return y += 25 << 248; // Twenty-five digits
                 if (x < 1e26) return y += 26 << 248; // Twenty-six digits
                 return y += 27 << 248; // Twenty-seven digits
             }
-            y += (x / 1e27 % 10) << 216;
-            y += (x / 1e28 % 10) << 224;
-            y += (x / 1e29 % 10) << 232;
+
+            y +=  ((x / 1e27 % 10) << 216)
+                + ((x / 1e28 % 10) << 224)
+                + ((x / 1e29 % 10) << 232);
+
             if (x < 1e30) {
                 if (x < 1e28) return y += 28 << 248; // Twenty-eight digits
                 if (x < 1e29) return y += 29 << 248; // Twenty-nine digits
                 return y += 30 << 248; // Thirty digits
             }
+
             y += (x / 1e30 % 10) << 240; 
             return y += 31 << 248; // Thirty-one digits
         }
