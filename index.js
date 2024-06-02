@@ -1,13 +1,11 @@
 import { ethers } from 'ethers'
 import ABI from './abi.json' with { type: "json" };
 
-//  Sign up for a free API key from https://www.alchemy.com
-const PROVIDER = new ethers.AlchemyProvider('sepolia', 'XXXXXXX')
+const PROVIDER = new ethers.JsonRpcProvider('https://sepolia.gateway.tenderly.co');
 const WALLET_PKEY = '0xb5537bcfe058b4943381b9f06e1ef47a516bd0ce2384def482883ef645444ede'
 const WALLET = new ethers.Wallet(WALLET_PKEY, PROVIDER)
 
-// https://mumbai.polygonscan.com/address/0xb51a3175aCcE7D01bFD0717f9C4BD69a13dF6D3C#code
-const CONTRACT = new ethers.Contract('0xe993836385f2f7aacd8e1331d2d5fe2188660b42', ABI, WALLET)
+const CONTRACT = new ethers.Contract('0x9bC411bda561Ea5155244460D7195c2Cf15681f2', ABI, WALLET)
 
 const METHODS = [
     'uintToStringProvable',
