@@ -198,9 +198,6 @@ library Algos {
         }
     }
 
-    /// @notice Helper function for UInt256 Conversion
-    /// @param x The uint256 value to convert
-    /// @return y The string representation of the uint256 value as a
 
     /// @notice Helper function to convert a uint256 to its string representation
     /// @param x The uint256 value to convert
@@ -213,107 +210,295 @@ library Algos {
                 + (x % 10)
                 + ((x / 1e1 % 10) << 8);
 
-            // Use checkpoints to reduce unnecessary divisions and modulo operations
-            if (x < 1e3) {
-                if (x >= 1e2) return y += ((x * 0x290) & (0xf << 16)) | (3 << 248); // Three digits
-                if (x >= 1e1) return y += 2 << 248; // Two digits
-                return y += 1 << 248; // One digit
+            // 16-1 digits
+            if (x < 1e16) {
+                // 8-1 digits
+                if (x < 1e8) {
+                    // 4-1 digits
+                    if (x < 1e4) {
+                        // 2-1 digits
+                        if (x < 1e2) {
+                            // 1 digit
+                            if (x < 1e1) {
+                                return y += 1 << 248;
+                            }
+                            // 2 digits
+                            else {
+                                return y += 2 << 248;
+                            }
+                        }
+                        // 3 digits
+                        else if(x < 1e3) {
+                            return y += ((x * 0x290) & (0xf << 16)) | (3 << 248);
+                        }
+                        // 4 digits
+                        else {
+                            return y += ((x / 1e2 % 10) << 16)
+                                      + ((x * 0x418a) & (0xf << 24)) | (4 << 248);
+                        }
+                    }
+                    // 7-5 digits
+                    else {
+                        y += ((x / 1e2 % 10) << 16)
+                           + ((x / 1e3 % 10) << 24);
+
+                        // 6-5 digits
+                        if (x < 1e6) {
+                            // 5 digits
+                            if (x < 1e5) {
+                                return y += ((x * 0x68db9) & (0xf << 32)) | (5 << 248);
+                            }
+                            // 6 digits
+                            else {
+                                return y += ((x / 1e4 % 10) << 32)
+                                          + ((x * 0xa7c5ad) & (0xf << 40)) | (6 << 248);
+                            }
+                        }
+                        // 7 digits
+                        else {
+                            y += ((x / 1e4 % 10) << 32)
+                               + ((x / 1e5 % 10) << 40);
+
+                            if(x < 1e7) {
+                                return y += ((x * 0x10c6f7a1) & (0xf << 48)) | (7 << 248);
+                            }
+                            // 8 digits
+                            else {
+                                return y += ((x / 1e6 % 10) << 48)
+                                          + ((x * 0x1ad7f29ac) & (0xf << 56)) | (8 << 248);
+                            }
+                        }
+                    }
+                }
+                // 16-9 digits
+                else {
+                    y += ((x / 1e2 % 10) << 16)
+                       + ((x / 1e3 % 10) << 24)
+                       + ((x / 1e4 % 10) << 32)
+                       + ((x / 1e5 % 10) << 40)
+                       + ((x / 1e6 % 10) << 48)
+                       + ((x / 1e7 % 10) << 56);
+
+                    // 12-9 digits
+                    if (x < 1e12) {
+                        // 10-9 digits
+                        if (x < 1e10) {
+                            // 9 digits
+                            if (x < 1e9) {
+                                return y += ((x * 0x2af31dc462) & (0xf << 64)) | (9 << 248);
+                            }
+                            // 10 digits
+                            else {
+                                return y += ((x / 1e8 % 10) << 64)
+                                        + ((x * 0x44b82fa09b6) & (0xf << 72)) | (10 << 248);
+                            }
+                        }
+                        // 11 digits
+                        else if (x < 1e11) {
+                            return y += ((x / 1e8 % 10) << 64)
+                                    + ((x / 1e9 % 10) << 72)
+                                    + ((x * 0x6df37f675ef7) & (0xf << 80)) | (11 << 248);
+                        }
+                        // 12 digits
+                        else {
+                            return y += ((x / 1e8 % 10) << 64)
+                                    + ((x / 1e9 % 10) << 72)
+                                    + ((x / 1e10 % 10) << 80)
+                                    + ((x * 0xafebff0bcb24b) & (0xf << 88)) | (12 << 248);
+                        }
+                    }
+                    // 16-13 digits
+                    else {
+                        y += ((x / 1e8 % 10) << 64)
+                           + ((x / 1e9 % 10) << 72)
+                           + ((x / 1e10 % 10) << 80)
+                           + ((x / 1e11 % 10) << 88);
+
+                        // 14-13 digits
+                        if (x < 1e14) {
+                            // 13 digits
+                            if (x < 1e13) {
+                                return y += ((x * 0x119799812dea112) & (0xf << 96)) | (13 << 248);
+                            }
+                            // 14 digits
+                            else {
+                                return y += ((x / 1e12 % 10) << 96)
+                                        + ((x * 0x1c25c268497681c3) & (0xf << 104)) | (14 << 248);
+                            }
+                        }
+                        // 16-15 digits
+                        else {
+                            y += ((x / 1e12 % 10) << 96)
+                               + ((x / 1e13 % 10) << 104);
+
+                            // 15 digits
+                            if(x < 1e15) {
+                                return y += ((x * 0x2d09370d42573603e) & (0xf << 112)) | (15 << 248);
+                            }
+                            // 16 digits
+                            else {
+                                return y += ((x / 1e14 % 10) << 112)
+                                          + ((x * 0x480ebe7b9d58566c88) & (0xf << 120)) | (16 << 248);
+                            }
+                        }
+                    }
+                }
             }
+            // 31-17 digits
+            else {
+                y += ((x / 1e2 % 10) << 16)
+                   + ((x / 1e3 % 10) << 24)
+                   + ((x / 1e4 % 10) << 32)
+                   + ((x / 1e5 % 10) << 40)
+                   + ((x / 1e6 % 10) << 48)
+                   + ((x / 1e7 % 10) << 56)
+                   + ((x / 1e8 % 10) << 64);
 
-            y +=  ((x / 1e2 % 10) << 16)
-                + ((x / 1e3 % 10) << 24)
-                + ((x / 1e4 % 10) << 32);
+                y += ((x / 1e9 % 10) << 72)
+                   + ((x / 1e10 % 10) << 80)
+                   + ((x / 1e11 % 10) << 88)
+                   + ((x / 1e12 % 10) << 96)
+                   + ((x / 1e13 % 10) << 104)
+                   + ((x / 1e14 % 10) << 112)
+                   + ((x / 1e15 % 10) << 120);
 
-            if (x < 1e6) {
-                if (x >= 1e5) return y += ((x * 0xa7c5ad) & (0xf << 40)) | (6 << 248); // Six digits
-                if (x >= 1e4) return y += 5 << 248; // Five digits
-                return y += 4 << 248; // Four digits
+                // 24-17 digits
+                if (x < 1e24) {
+                    // 20-17 digits
+                    if (x < 1e20) {
+                        // 18-17 digits
+                        if (x < 1e18) {
+                            // 17 digits
+                            if (x < 1e17) {
+                                return y += ((x * 0x734aca5f6226f0ada62) & (0xf << 128)) | (17 << 248);
+                            }
+                            // 18 digits
+                            else {
+                                return y += ((x / 1e16 % 10) << 128)
+                                          + ((x * 0xb877aa3236a4b44909bf) & (0xf << 136)) | (18 << 248);
+                            }
+                        }
+                        // 20-19 digits
+                        else {
+                            y += ((x / 1e16 % 10) << 128)
+                               + ((x / 1e17 % 10) << 136);
+
+                            // 19 digits
+                            if (x < 1e19) {
+                                return y += ((x * 0x12725dd1d243aba0e75fe7) & (0xf << 144)) | (19 << 248);
+                            }
+                            // 20 digits
+                            else {
+                                return y += ((x / 1e18 % 10) << 144)
+                                          + ((x * 0x1d83c94fb6d2ac34a5663d4) & (0xf << 152)) | (20 << 248);
+                            }
+                        }
+                    }
+                    // 24-21 digits
+                    else {
+                        y += ((x / 1e16 % 10) << 128)
+                            + ((x / 1e17 % 10) << 136)
+                            + ((x / 1e18 % 10) << 144)
+                            + ((x / 1e19 % 10) << 152);
+
+                        // 22-21 digits
+                        if (x < 1e22) {
+                            // 21 digits
+                            if (x < 1e21) {
+                                return y += ((x * 0x2f394219248446baa23d2ec8) & (0xf << 160)) | (21 << 248);
+                            }
+                            // 22 digits
+                            else {
+                                return y += ((x / 1e20 % 10) << 160)
+                                          + ((x * 0x4b8ed0283a6d3df769fb7e0b8) & (0xf << 168)) | (22 << 248);
+                            }
+                        }
+                        // 24-23 digits
+                        else {
+                            y += ((x / 1e20 % 10) << 160)
+                               + ((x / 1e21 % 10) << 168);
+
+                            // 23 digits
+                            if (x < 1e23) {
+                                return y += ((x * 0x78e480405d7b9658a99263458a) & (0xf << 176)) | (23 << 248);
+                            }
+                            // 24 digits
+                            else {
+                                return y += ((x / 1e22 % 10) << 176)
+                                          + ((x * 0xc16d9a0095928a2775b7053c0f2) & (0xf << 184)) | (24 << 248);
+                            }
+                        }
+                    }
+                }
+                // 31-25 digits
+                else {
+                    y += ((x / 1e16 % 10) << 128)
+                        + ((x / 1e17 % 10) << 136)
+                        + ((x / 1e18 % 10) << 144)
+                        + ((x / 1e19 % 10) << 152)
+                        + ((x / 1e20 % 10) << 160)
+                        + ((x / 1e21 % 10) << 168)
+                        + ((x / 1e22 % 10) << 176)
+                        + ((x / 1e23 % 10) << 184);
+
+                    // 28-25 digits
+                    if (x < 1e28) {
+                        // 26-25 digits
+                        if (x < 1e26) {
+                            // 25 digits
+                            if (x < 1e25) {
+                                return y += ((x * 0x1357c299a88ea76a58924d52ce4f3) & (0xf << 192)) | (25 << 248);
+                            }
+                            // 26 digits
+                            else {
+                                return y += ((x / 1e24 % 10) << 192)
+                                          + ((x * 0x1ef2d0f5da7dd8aa27507bb7b07ea5) & (0xf << 200)) | (26 << 248);
+                            }
+                        }
+                        // 28-27 digits
+                        else {
+                            y += ((x / 1e24 % 10) << 192)
+                               + ((x / 1e25 % 10) << 200);
+
+                            // 27 digits
+                            if (x < 1e27) {
+                                return y += ((x * 0x318481895d962776a54d92bf80caa07) & (0xf << 208)) | (27 << 248);
+                            }
+                            // 28 digits
+                            else {
+                                return y += ((x / 1e26 % 10) << 208)
+                                          + ((x * 0x4f3a68dbc8f03f243baf513267aa9a3f) & (0xf << 216)) | (28 << 248);
+                            }
+                        }
+                    }
+                    // 31-29
+                    else {
+                        y += ((x / 1e24 % 10) << 192)
+                           + ((x / 1e25 % 10) << 200)
+                           + ((x / 1e26 % 10) << 208)
+                           + ((x / 1e27 % 10) << 216);
+
+                        // 30-29 digits
+                        if (x < 1e30) {
+                            // 29 digits
+                            if (x < 1e29) {
+                                return y += ((x * 0x7ec3daf941806506c5e54eb70c4429fe4) & (0xf << 224)) | (29 << 248);
+                            }
+                            // 30 digits
+                            else {
+                                return y += ((x / 1e28 % 10) << 224)
+                                          + ((x * 0xcad2f7f5359a3b3e096ee45813a0433060) & (0xf << 232)) | (30 << 248);
+                            }
+                        }
+                        // 31 digits
+                        else {
+                            return y += ((x / 1e28 % 10) << 224)
+                                      + ((x / 1e29 % 10) << 232)
+                                      + ((x / 1e30 % 10) << 240) | (31 << 248);
+                        }
+                    }
+                }
             }
-
-            y +=  ((x / 1e5 % 10) << 40)
-                + ((x / 1e6 % 10) << 48)
-                + ((x / 1e7 % 10) << 56);
-
-            if (x < 1e9) {
-                if (x >= 1e8) return y += ((x * 0x2af31dc462) & (0xf << 64)) | (9 << 248); // Nine digits
-                if (x >= 1e7) return y += 8 << 248; // Eight digits
-                return y += 7 << 248; // Seven digits
-            }
-
-            y +=  ((x / 1e8 % 10) << 64)
-                + ((x / 1e9 % 10) << 72)
-                + ((x / 1e10 % 10) << 80);
-
-            if (x < 1e12) {
-                if (x >= 1e11) return y += ((x * 0xafebff0bcb24b) & (0xf << 88)) | (12 << 248); // Twelve digits
-                if (x >= 1e10) return y += 11 << 248; // Eleven digits
-                return y += 10 << 248; // Ten digits
-            }
-
-            y +=  ((x / 1e11 % 10) << 88)
-                + ((x / 1e12 % 10) << 96)
-                + ((x / 1e13 % 10) << 104);
-
-            if (x < 1e15) {
-                if (x >= 1e14) return y += ((x * 0x2d09370d42573603e) & (0xf << 112)) | (15 << 248); // Fifteen digits
-                if (x >= 1e13) return y += 14 << 248; // Fourteen digits
-                return y += 13 << 248; // Thirteen digits
-            }
-
-            y +=  ((x / 1e14 % 10) << 112)
-                + ((x / 1e15 % 10) << 120)
-                + ((x / 1e16 % 10) << 128);
-
-            if (x < 1e18) {
-                if (x >= 1e17) return y += ((x * 0xb877aa3236a4b44909bf) & (0xf << 136)) | (18 << 248); // Eighteen digits
-                if (x >= 1e16) return y += 17 << 248; // Seventeen digits
-                return y += 16 << 248; // Sixteen digits
-            }
-
-            y +=  ((x / 1e17 % 10) << 136)
-                + ((x / 1e18 % 10) << 144)
-                + ((x / 1e19 % 10) << 152);
-
-            if (x < 1e21) {
-                if (x >= 1e20) return y += ((x * 0x2f394219248446baa23d2ec8) & (0xf << 160)) | (21 << 248); // Twenty-one digits
-                if (x >= 1e19) return y += 20 << 248; // Twenty digits
-                return y += 19 << 248; // Nineteen digits
-            }
-
-            y +=  ((x / 1e20 % 10) << 160)
-                + ((x / 1e21 % 10) << 168)
-                + ((x / 1e22 % 10) << 176);
-
-            if (x < 1e24) {
-                if (x >= 1e23) return y += ((x * 0xc16d9a0095928a2775b7053c0f2) & (0xf << 184)) | (24 << 248); // Twenty-four digits
-                if (x >= 1e22) return y += 23 << 248; // Twenty-three digits
-                return y += 22 << 248; // Twenty-two digits
-            }
-
-            y +=  ((x / 1e23 % 10) << 184)
-                + ((x / 1e24 % 10) << 192)
-                + ((x / 1e25 % 10) << 200);
-
-            if (x < 1e27) {
-                if (x >= 1e26) return y += ((x * 0x318481895d962776a54d92bf80caa07) & (0xf << 208)) | (27 << 248); // Twenty-seven digits
-                if (x >= 1e25) return y += 26 << 248; // Twenty-six digits
-                return y += 25 << 248; // Twenty-five digits
-            }
-
-            y +=  ((x / 1e26 % 10) << 208)
-                + ((x / 1e27 % 10) << 216)
-                + ((x / 1e28 % 10) << 224);
-
-            if (x < 1e30) {
-                if (x >= 1e29) return y += ((x * 0xcad2f7f5359a3b3e096ee45813a0433060) & (0xf << 232)) | (30 << 248); // Thirty digits
-                if (x >= 1e28) return y += 29 << 248; // Twenty-nine digits
-                else return y += 28 << 248; // Twenty-eight digits
-            }
-
-            y +=  ((x / 1e29 % 10) << 232)
-                + ((x / 1e30 % 10) << 240); 
-
-            return y += 31 << 248; // Thirty-one digits
         }
     }
 }
